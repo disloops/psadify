@@ -295,7 +295,6 @@ body {
     text-align: left;
 }
 
-
 """
     return css
 
