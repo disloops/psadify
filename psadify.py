@@ -332,7 +332,7 @@ def get_html_header():
     stats = os.stat('/etc/psad/psad.conf')
     uptime = time.ctime(stats.st_mtime)
 
-    article_link = '<a href="https://disloops.com/psad-on-raspebrry-pi" target="_blank">PSAD on Raspberry Pi</a>'
+    article_link = '<a href="https://disloops.com/psad-on-raspberry-pi" target="_blank">PSAD on Raspberry Pi</a>'
 
     html = '<div class="headerBlock">'
     html += '<span style="font-weight: bold;">PORT SCAN ATTACK DETECTOR (PSAD)</span>'
