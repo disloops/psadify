@@ -17,7 +17,7 @@ THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR IMPLIED WARRA
 #### Usage
 
 ```
-psadify.py [-h] [-o output file]
+psadify.py [-h] [-o OUTPUT]
 
 -h, --help                      Show this message and exit
 -o, --output OUTPUT             The file that is generated with the HTML content
