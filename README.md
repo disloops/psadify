@@ -1,6 +1,6 @@
 # PSADify
 
-PSADify is a tool for converting PSAD output into HTML.
+PSADify is a tool for converting Port Scan Attack Detector (PSAD) output into HTML.
 
 #### Information
 
