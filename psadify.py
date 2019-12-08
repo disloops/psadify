@@ -22,20 +22,87 @@
 # SOFTWARE.
 
 __author__ = 'Matt Westfall'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __email__ = 'disloops@gmail.com'
 
 import os
 import re
 import sys
 import time
+import glob
 import urllib
+import socket
 import argparse
+
+# compile the latest attacks
+def get_last_attacks():
+
+    last_attacks = []
+
+    # used to skip private IP ranges
+    internal_ip_re = re.compile('^(?:10|127|172\.(?:1[6-9]|2[0-9]|3[01])|192\.168)\..*')
+
+    # PSAD log files sorted by date
+    files = sorted(glob.iglob('/var/log/psad/*'), key=os.path.getctime, reverse=True)
+
+    # imperfect science of extracting info from WHOIS data
+    country_re = re.compile('^country:', flags=re.IGNORECASE)
+
+    # get the directories named after valid IPs only
+    for file in files:
+        if os.path.isdir(file):
+            try:
+                socket.inet_pton(socket.AF_INET, os.path.basename(file))
+                if not internal_ip_re.match(os.path.basename(file)):
+
+                    last_seen = time.ctime(os.path.getctime(file))
+                    first_seen = '?'
+                    IP = '?'
+                    country = '?'
+                    ports = '?'
+
+                    whois_file = file + '/' + os.path.basename(file) + '_whois'
+
+                    with open(whois_file, 'r') as f:
+                        for line in f:
+                            if country == '?' and country_re.match(line):
+                                country = line.split(None, 1)[1][:2]
+
+                    for IP_file in os.listdir(file):
+                        if IP_file.endswith("_email_alert"):
+                            email_alert = file + '/' + IP_file
+
+                    with open(email_alert, 'r') as f:
+
+                        for line in f.readlines():
+                            if first_seen == '?' and "overall scan start:" in line.lower():
+                                first_seen = line.split(": ", 1)[1]
+                            if IP == '?' and "source:" in line.lower():
+                                IP = line.split(": ", 1)[1]
+                            if ports == '?' and "scanned tcp ports" in line.lower():
+                                ports = re.search('\[(.+?):', line).group(1)
+
+                        attacker_dict = {
+                            "last_seen": last_seen,
+                            "first_seen": first_seen,
+                            "IP": IP,
+                            "country": country,
+                            "ports": ports
+                        }
+                        last_attacks.append(attacker_dict)
+
+            except:
+                pass
+            if len(last_attacks) == 20:
+                break
+
+    return last_attacks
 
 # parse the top attackers file
 def get_top_attackers():
 
     top_attackers = []
+    raw_attackers = None
 
     # imperfect science of extracting info from WHOIS data
     country_re = re.compile('^country:', flags=re.IGNORECASE)
@@ -44,8 +111,11 @@ def get_top_attackers():
     # used to skip private IP ranges
     internal_ip_re = re.compile('^(?:10|127|172\.(?:1[6-9]|2[0-9]|3[01])|192\.168)\..*')
 
-    with open('/var/log/psad/top_attackers', 'r') as f:
-        raw_attackers = f.readlines()
+    # using this while loop to get around instances where no data comes back
+    # possibly due to the file being in use and locked
+    while not raw_attackers:
+        with open('/var/log/psad/top_attackers', 'r') as f:
+            raw_attackers = f.readlines()
 
     for attacker in raw_attackers:
         if attacker[0].isdigit():
@@ -138,6 +208,34 @@ def get_top_ports():
                 pass
 
     return top_ports
+
+# create last attacks HTML table
+def get_last_attacks_html(last_attacks):
+
+    last_attacks_html = '<table class="psadTable" id="lastAttacksTable">'
+    last_attacks_html += '<tr class="psadTableRow">'
+    last_attacks_html += '<td class="psadTableHead">Last Seen</td>'
+    last_attacks_html += '<td class="psadTableHead">First Seen</td>'
+    last_attacks_html += '<td class="psadTableHead">IP Address</td>'
+    last_attacks_html += '<td class="psadTableHead">Country</td>'
+    last_attacks_html += '<td class="psadTableHead">Ports Targeted</td>'
+    last_attacks_html += '</tr>'
+
+    for attack in last_attacks:
+
+        IP_link = '<a href="https://www.whois.com/whois/' + attack['IP'] + '" target="_blank">'
+        IP_link += attack['IP'] + '</a>'
+
+        last_attacks_html += '<tr class="psadTableRow">'
+        last_attacks_html += '<td class="psadTableCell">' + attack['last_seen'] + '</td>'
+        last_attacks_html += '<td class="psadTableCell">' + attack['first_seen'] + '</td>'
+        last_attacks_html += '<td class="psadTableCell">' + IP_link + '</td>'
+        last_attacks_html += '<td class="psadTableCell">' + attack['country'] + '</td>'
+        last_attacks_html += '<td class="psadTableCell">' + attack['ports'] + '</td>'
+        last_attacks_html += '</tr>'
+
+    last_attacks_html += '</table>'
+    return last_attacks_html
 
 # create top attackers HTML table
 def get_attackers_html(top_attackers):
@@ -253,7 +351,7 @@ body {
     font-family: Helvetica, Arial, Sans-Serif;
     font-size: small;
 }
-#attackerTable, #signatureTable {
+#lastAttacksTable, #attackerTable, #signatureTable {
     margin: 0px auto 40px auto;
 }
 #portTable01, #portTable02 {
@@ -302,26 +400,56 @@ def get_javascript():
 
     js = """
 
+function showLastAttacksTable() {
+    document.getElementById("lastAttacksTable").style.display = "table";
+    document.getElementById("attackerTable").style.display = "none";
+    document.getElementById("signatureTable").style.display = "none";
+    document.getElementById("portTable01").style.display = "none";
+    document.getElementById("portTable02").style.display = "none";
+
+    document.getElementById("lastAttacksButton").style.fontWeight = "bold";
+    document.getElementById("showAttackersButton").style.fontWeight = "normal";
+    document.getElementById("topSignaturesButton").style.fontWeight = "normal";
+    document.getElementById("topPortsButton").style.fontWeight = "normal";
+}
 function showAttackerTable() {
+    document.getElementById("lastAttacksTable").style.display = "none";
     document.getElementById("attackerTable").style.display = "table";
     document.getElementById("signatureTable").style.display = "none";
     document.getElementById("portTable01").style.display = "none";
     document.getElementById("portTable02").style.display = "none";
+
+    document.getElementById("lastAttacksButton").style.fontWeight = "normal";
+    document.getElementById("showAttackersButton").style.fontWeight = "bold";
+    document.getElementById("topSignaturesButton").style.fontWeight = "normal";
+    document.getElementById("topPortsButton").style.fontWeight = "normal";
 }
 function showSignatureTable() {
+    document.getElementById("lastAttacksTable").style.display = "none";
     document.getElementById("attackerTable").style.display = "none";
     document.getElementById("signatureTable").style.display = "table";
     document.getElementById("portTable01").style.display = "none";
     document.getElementById("portTable02").style.display = "none";
+
+    document.getElementById("lastAttacksButton").style.fontWeight = "normal";
+    document.getElementById("showAttackersButton").style.fontWeight = "normal";
+    document.getElementById("topSignaturesButton").style.fontWeight = "bold";
+    document.getElementById("topPortsButton").style.fontWeight = "normal";
 }
 function showPortsTable() {
+    document.getElementById("lastAttacksTable").style.display = "none";
     document.getElementById("attackerTable").style.display = "none";
     document.getElementById("signatureTable").style.display = "none";
     document.getElementById("portTable01").style.display = "table";
     document.getElementById("portTable02").style.display = "table";
+
+    document.getElementById("lastAttacksButton").style.fontWeight = "normal";
+    document.getElementById("showAttackersButton").style.fontWeight = "normal";
+    document.getElementById("topSignaturesButton").style.fontWeight = "normal";
+    document.getElementById("topPortsButton").style.fontWeight = "bold";
 }
 window.onload = function() {
-    showAttackerTable();
+    showLastAttacksTable();
 };
 
 """
@@ -344,11 +472,21 @@ def get_html_header():
     html += '<br><br>'
     html += '<span style="font-weight: bold;">Click here to show the various live data being tracked:</span>'
     html += '<br><br>'
+    html += '<span id="lastAttacksButton" style="font-weight: bold;">'
+    html += '<a onclick="showLastAttacksTable();" href="#">Last Attacks</a>'
+    html += '</span>'
+    html += '&nbsp;&nbsp;|&nbsp;&nbsp;'
+    html += '<span id="showAttackersButton">'
     html += '<a onclick="showAttackerTable();" href="#">Top Attackers</a>'
+    html += '</span>'
     html += '&nbsp;&nbsp;|&nbsp;&nbsp;'
+    html += '<span id="topSignaturesButton">'
     html += '<a onclick="showSignatureTable();" href="#">Top Signatures</a>'
+    html += '</span>'
     html += '&nbsp;&nbsp;|&nbsp;&nbsp;'
+    html += '<span id="topPortsButton">'
     html += '<a onclick="showPortsTable();" href="#">Top Ports</a>'
+    html += '</span>'
     html += '</div>'
 
     return html
@@ -364,14 +502,16 @@ def get_html_footer():
 
     return html
 
-def get_html(top_attackers, top_signatures, top_ports):
+def get_html(last_attacks, top_attackers, top_signatures, top_ports):
 
     html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    html += '<meta http-equiv="refresh" content="120">'
     html += '<title>Port Scan Attack Detector (PSAD) Status</title>'
     html += '<style type="text/css">' + get_css() + '</style>'
     html += '<script>' + get_javascript() + '</script>'
     html += '</head><body>'
     html += get_html_header()
+    html += get_last_attacks_html(last_attacks)
     html += get_attackers_html(top_attackers)
     html += get_signatures_html(top_signatures)
     html += get_ports_html(top_ports)
@@ -405,7 +545,7 @@ def main():
     if args.output:
         output_file = args.output
 
-    html = get_html(get_top_attackers(), get_top_signatures(), get_top_ports())
+    html = get_html(get_last_attacks(), get_top_attackers(), get_top_signatures(), get_top_ports())
 
     with open(output_file, 'w') as f:
         print(' [*] Writing output to ' + output_file)
