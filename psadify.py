@@ -42,8 +42,8 @@ def get_last_attacks():
     # used to skip private IP ranges
     internal_ip_re = re.compile('^(?:10|127|172\.(?:1[6-9]|2[0-9]|3[01])|192\.168)\..*')
 
-    # PSAD log files sorted by date
-    files = sorted(glob.iglob('/var/log/psad/*'), key=os.path.getctime, reverse=True)
+    # PSAD IP log files sorted by date
+    files = sorted(glob.iglob('/var/log/psad/[1-2]*'), key=os.path.getctime, reverse=True)
 
     # imperfect science of extracting info from WHOIS data
     country_re = re.compile('^country:', flags=re.IGNORECASE)
