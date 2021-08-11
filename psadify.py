@@ -302,7 +302,7 @@ def get_ports_html(top_ports):
     top_ports_html += '<td class="psadTableHead">Hits</td>'
     top_ports_html += '</tr>'
 
-    for port in top_ports[:rows/2]:
+    for port in top_ports[:rows//2]:
 
         port_link = '<a href="https://www.speedguide.net/port.php?port=' + port['port_num']
         port_link += '" target="_blank">' + port['port_num'] + '</a>'
@@ -319,7 +319,7 @@ def get_ports_html(top_ports):
     top_ports_html += '<td class="psadTableHead">Hits</td>'
     top_ports_html += '</tr>'
 
-    for port in top_ports[rows/2:rows]:
+    for port in top_ports[rows//2:rows]:
 
         port_link = '<a href="https://www.speedguide.net/port.php?port=' + port['port_num']
         port_link += '" target="_blank">' + port['port_num'] + '</a>'
