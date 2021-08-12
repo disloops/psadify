@@ -43,36 +43,33 @@ def get_last_attacks():
     internal_ip_re = re.compile('^(?:10|127|172\.(?:1[6-9]|2[0-9]|3[01])|192\.168)\..*')
 
     # PSAD IP log files sorted by date
-    files = sorted(glob.iglob('/var/log/psad/[1-2]*'), key=os.path.getctime, reverse=True)
+    files = sorted(glob.iglob('/var/log/psad/*/*_email_alert'), key=os.path.getmtime, reverse=True)
 
     # imperfect science of extracting info from WHOIS data
     country_re = re.compile('^country:', flags=re.IGNORECASE)
 
     # get the directories named after valid IPs only
     for file in files:
-        if os.path.isdir(file):
+        if not os.path.isdir(file):
             try:
-                socket.inet_pton(socket.AF_INET, os.path.basename(file))
-                if not internal_ip_re.match(os.path.basename(file)):
+                file_dir = os.path.dirname(file)
+                socket.inet_pton(socket.AF_INET, os.path.basename(file_dir))
+                if not internal_ip_re.match(os.path.basename(file_dir)):
 
-                    last_seen = time.ctime(os.path.getctime(file))
+                    last_seen = time.ctime(os.path.getmtime(file))
                     first_seen = '?'
                     IP = '?'
                     country = '?'
                     ports = '?'
 
-                    whois_file = file + '/' + os.path.basename(file) + '_whois'
+                    whois_file = file_dir + "/" + os.path.basename(file_dir) + "_whois"
 
                     with open(whois_file, 'r') as f:
                         for line in f:
                             if country == '?' and country_re.match(line):
                                 country = line.split(None, 1)[1][:2]
 
-                    for IP_file in os.listdir(file):
-                        if IP_file.endswith("_email_alert"):
-                            email_alert = file + '/' + IP_file
-
-                    with open(email_alert, 'r') as f:
+                    with open(file, 'r') as f:
 
                         for line in f.readlines():
                             if first_seen == '?' and "overall scan start:" in line.lower():
@@ -139,9 +136,9 @@ def get_top_attackers():
                                     host.append(line.split(None, 1)[1])
 
                     for file in os.listdir(path):
-                        if file.endswith('_packet_ctr'):
-                            stats = os.stat(os.path.join(path, file))
-                            last_seen = time.ctime(stats.st_mtime)
+                        if file.endswith('_email_alert'):
+                            file_path = os.path.join(path, file)
+                            last_seen = time.ctime(os.path.getmtime(file_path))
 
                     attacker_dict = {
                         "last_seen": last_seen,
@@ -457,8 +454,8 @@ window.onload = function() {
 
 def get_html_header():
 
-    stats = os.stat('/etc/psad/psad.conf')
-    uptime = time.ctime(stats.st_mtime)
+    conf_file = "/etc/psad/psad.conf"
+    uptime = time.ctime(os.path.getmtime(conf_file))
 
     article_link = '<a href="https://disloops.com/psad-on-raspberry-pi" target="_blank">PSAD on Raspberry Pi</a>'
 
