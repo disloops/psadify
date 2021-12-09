@@ -216,6 +216,7 @@ def get_last_attacks_html(last_attacks):
     last_attacks_html += '<td class="psadTableHead">IP Address</td>'
     last_attacks_html += '<td class="psadTableHead">Country</td>'
     last_attacks_html += '<td class="psadTableHead">Ports Targeted</td>'
+    last_attacks_html += '<td class="psadTableHead">OSINT Links</td>'
     last_attacks_html += '</tr>'
 
     for attack in last_attacks:
@@ -223,12 +224,17 @@ def get_last_attacks_html(last_attacks):
         IP_link = '<a href="https://www.whois.com/whois/' + attack['IP'] + '" target="_blank">'
         IP_link += attack['IP'] + '</a>'
 
+        OSINT_links = '[<a href="https://dnslytics.com/ip/' + attack['IP'] + '" target="_blank">1</a>]&nbsp;'
+        OSINT_links += '[<a href="https://www.virustotal.com/gui/ip-address/' + attack['IP'] + '" target="_blank">2</a>]&nbsp;'
+        OSINT_links += '[<a href="https://www.abuseipdb.com/check/' + attack['IP'] + '" target="_blank">3</a>]'
+
         last_attacks_html += '<tr class="psadTableRow">'
         last_attacks_html += '<td class="psadTableCell">' + attack['last_seen'] + '</td>'
         last_attacks_html += '<td class="psadTableCell">' + attack['first_seen'] + '</td>'
         last_attacks_html += '<td class="psadTableCell">' + IP_link + '</td>'
         last_attacks_html += '<td class="psadTableCell">' + attack['country'] + '</td>'
         last_attacks_html += '<td class="psadTableCell">' + attack['ports'] + '</td>'
+        last_attacks_html += '<td class="psadTableCell">' + OSINT_links + '</td>'
         last_attacks_html += '</tr>'
 
     last_attacks_html += '</table>'
@@ -247,6 +253,7 @@ def get_attackers_html(top_attackers):
     top_attackers_html += '<td class="psadTableHead">IP Address</td>'
     top_attackers_html += '<td class="psadTableHead">Country</td>'
     top_attackers_html += '<td class="psadTableHead">Hosting Provider</td>'
+    top_attackers_html += '<td class="psadTableHead">OSINT Links</td>'
     top_attackers_html += '</tr>'
 
     for attacker in top_attackers[:rows]:
@@ -254,12 +261,17 @@ def get_attackers_html(top_attackers):
         IP_link = '<a href="https://www.whois.com/whois/' + attacker['IP'] + '" target="_blank">'
         IP_link += attacker['IP'] + '</a>'
 
+        OSINT_links = '[<a href="https://dnslytics.com/ip/' + attack['IP'] + '" target="_blank">1</a>]&nbsp;'
+        OSINT_links += '[<a href="https://www.virustotal.com/gui/ip-address/' + attack['IP'] + '" target="_blank">2</a>]&nbsp;'
+        OSINT_links += '[<a href="https://www.abuseipdb.com/check/' + attack['IP'] + '" target="_blank">3</a>]'
+
         top_attackers_html += '<tr class="psadTableRow">'
         top_attackers_html += '<td class="psadTableCell">' + attacker['last_seen'] + '</td>'
         top_attackers_html += '<td class="psadTableCell">' + attacker['hits'] + '</td>'
         top_attackers_html += '<td class="psadTableCell">' + IP_link + '</td>'
         top_attackers_html += '<td class="psadTableCell">' + attacker['country'].upper() + '</td>'
         top_attackers_html += '<td class="psadTableCellLeft">' + attacker['host'] + '</td>'
+        top_attackers_html += '<td class="psadTableCell">' + OSINT_links + '</td>'
         top_attackers_html += '</tr>'
 
     top_attackers_html += '</table>'
