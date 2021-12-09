@@ -261,9 +261,9 @@ def get_attackers_html(top_attackers):
         IP_link = '<a href="https://www.whois.com/whois/' + attacker['IP'] + '" target="_blank">'
         IP_link += attacker['IP'] + '</a>'
 
-        OSINT_links = '[<a href="https://dnslytics.com/ip/' + attack['IP'] + '" target="_blank">1</a>]&nbsp;'
-        OSINT_links += '[<a href="https://www.virustotal.com/gui/ip-address/' + attack['IP'] + '" target="_blank">2</a>]&nbsp;'
-        OSINT_links += '[<a href="https://www.abuseipdb.com/check/' + attack['IP'] + '" target="_blank">3</a>]'
+        OSINT_links = '[<a href="https://dnslytics.com/ip/' + attacker['IP'] + '" target="_blank">1</a>]&nbsp;'
+        OSINT_links += '[<a href="https://www.virustotal.com/gui/ip-address/' + attacker['IP'] + '" target="_blank">2</a>]&nbsp;'
+        OSINT_links += '[<a href="https://www.abuseipdb.com/check/' + attacker['IP'] + '" target="_blank">3</a>]'
 
         top_attackers_html += '<tr class="psadTableRow">'
         top_attackers_html += '<td class="psadTableCell">' + attacker['last_seen'] + '</td>'
