@@ -8,7 +8,7 @@ Read about the PSAD tool here: [https://disloops.com/psad-on-raspberry-pi](https
 
 This script can be downloaded here: [https://github.com/disloops/psadify](https://github.com/disloops/psadify)
 
-See the live attack data here: [https://psad.disloops.com](https://psad.disloops.com)
+See the live attack data here: [http://psad.disloops.com](http://psad.disloops.com)
 
 #### Disclaimer
 
